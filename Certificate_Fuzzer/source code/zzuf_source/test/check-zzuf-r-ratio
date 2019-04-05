@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+#  check-zzuf-r-ratio - zzuf RNG statistic tests
+#
+#  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What the Fuck You Want
+#  to Public License, Version 2, as published by the WTFPL Task Force.
+#  See http://www.wtfpl.net/ for more details.
+#
+
+. "$(dirname "$0")/functions.inc"
+
+checkflip()
+{
+    r=$1
+    expect=$2
+    mib=20
+    try=3
+    s2=$seed
+    new_test "$mib MiB of zeroes, ratio $r"
+    echo " expecting $expect"
+    checkflip_internal $1 $2 $mib $try $s2
+}
+
+checkflip_internal()
+{
+    r=$1
+    expect=$2
+    mib=$3
+    try=$4
+    s2=$5
+    rmax=-1
+    rmin=-1
+    rtot=0
+    printf " got"
+    for x in 0 1 2 3 4; do
+        ret=`dd if=/dev/zero bs=1048576 count=$mib 2>/dev/null | $ZZUF -s $s2 -r $r | "$ZZERO"`
+        if [ "$rmax" = -1 -o "$ret" -gt "$rmax" ]; then rmax=$ret; fi
+        if [ "$rmin" = -1 -o "$ret" -lt "$rmin" ]; then rmin=$ret; fi
+        rtot=`expr $rtot + $ret || true`
+        printf " $ret"
+        s2=`expr $s2 + 1`
+    done
+    echo ""
+    rmean=`expr '(' $rtot + 2 ')' / 5 || true`
+    delta=`expr $rmean - $expect || true`
+    printf " min/avg/max $rmin/$rmean/$rmax .........."
+    if [ "$delta" -gt -5 -a "$delta" -lt 5 ]; then
+        pass_test " ok"
+    elif [ $(($rmean * 8)) -lt $(($expect * 7)) \
+               -o $(($rmean * 7)) -gt $(($expect * 8)) ]; then
+        if [ $try -gt 0 ]; then
+            # Hack: if we failed with that seed, just try another one.
+            # Kinda defeats the purpose of the test, but well, that's
+            # how randomness works, you cannot win each time.
+            echo " trying again"
+            checkflip_internal $1 $2 $3 $(($3 - 1)) "$3$s2"
+        else
+            fail_test " FAILED"
+        fi
+    else
+        pass_test " ok"
+    fi
+}
+
+start_test "zzuf -r test"
+
+# if X flips are performed on N bits set to 0, the average number of bits
+# set to 1 is: N / 2 * (1 - pow(1 - 2 / N, X)
+checkflip 0.000000001 0
+checkflip 0.00000001  1
+checkflip 0.0000001  16
+checkflip 0.000001  167
+checkflip 0.00001  1677
+checkflip 0.0001  16775
+checkflip 0.001  167604
+checkflip 0.01  1661055
+checkflip 0.1  15205967
+
+stop_test
+

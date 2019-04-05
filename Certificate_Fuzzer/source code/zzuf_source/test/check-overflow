@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+#  check-overflow - check that zzuf catches buffer overflows
+#
+#  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What the Fuck You Want
+#  to Public License, Version 2, as published by the WTFPL Task Force.
+#  See http://www.wtfpl.net/ for more details.
+#
+
+. "$(dirname "$0")/functions.inc"
+
+ulimit -c 0
+
+PROGRAM="$DIR/bug-overflow"
+if [ ! -f "$PROGRAM" ]; then
+  echo "error: test/bug-overflow is missing"
+  exit 1
+fi
+
+start_test "zzuf buffer overflow test"
+
+new_test "bug-overflow < /file-00"
+if ! $PROGRAM < "$DIR/file-00"; then
+    fail_test " unexpected exit status $?"
+else
+    pass_test " OK"
+fi
+
+new_test "zzuf -qi -r0 bug-overflow < /file-00"
+if ! $ZZUF -r0 -qi "$PROGRAM" < "$DIR/file-00"; then
+    fail_test " unexpected exit status $?"
+else
+    pass_test " OK"
+fi
+
+new_test "zzuf -qi bug-overflow < file-00"
+if $ZZUF -qi "$PROGRAM" < "$DIR/file-00"; then
+    fail_test " unexpected exit status $?"
+else
+    pass_test " OK"
+fi
+
+stop_test
+

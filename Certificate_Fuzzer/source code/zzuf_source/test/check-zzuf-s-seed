@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+#  check-zzuf-s-seed - zzuf seed efficiency statistic tests
+#
+#  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What the Fuck You Want
+#  to Public License, Version 2, as published by the WTFPL Task Force.
+#  See http://www.wtfpl.net/ for more details.
+#
+
+. "$(dirname "$0")/functions.inc"
+
+start_test "zzuf -s test"
+
+t=0
+while : ; do
+  case $t in
+    0) ratio=1; bytes=32768 ;;
+    1) ratio=0.1; bytes=32768 ;;
+    2) ratio=0.01; bytes=32768 ;;
+    3) ratio=0.001; bytes=8192 ;;
+    4) ratio=0.0001; bytes=1024 ;;
+    *) break ;;
+  esac
+  t=$(expr $t + 1)
+  new_test "$bytes B of zeroes, ratio $ratio"
+  zeroes=$(expr $bytes '*' 4)
+  passes=10
+  while test $zeroes -gt 0 -a $passes -lt 200000; do
+    printf " doing $passes passes..."
+    zeroes=$($ZZUF -r $ratio -s $seed -A $ZZAT -r $passes -x "fread(1,$bytes)" /dev/zero | $DIR/zzone $bytes $passes)
+    echo " $zeroes"
+    passes=$(expr '(' $passes '*' 7 + 3 ')' / 4)
+  done
+  if test $passes -lt 200000; then
+      pass_test " ok"
+  else
+      pass_test " FAILED"
+  fi
+done
+
+stop_test
+

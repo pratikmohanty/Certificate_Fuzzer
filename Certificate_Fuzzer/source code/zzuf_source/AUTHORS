@@ -1,0 +1,13 @@
+
+main zzuf author:
+ Sam Hocevar <sam@hocevar.net>
+
+other contributors:
+ Rémi Denis-Courmont <rdenis#simphalempin:com> (readv, recvmsg)
+ Clément Stenac <zorglub#diwi:org> (pread)
+ Dominik Kuhlen <dominik.kuhlen#gmit-gmbh:de> (recvfrom)
+ Sami Liedes <sliedes#cc:hut:fi> (LD_PRELOAD conservation)
+ Corentin Delorme <codelorme@gmail.com> (remote host filtering)
+ Kévin Szkudłapski <kszkudlapski@quarkslab.com> (win32 port)
+ Will Newton <will.newton@linaro.org> (bugfixes)
+

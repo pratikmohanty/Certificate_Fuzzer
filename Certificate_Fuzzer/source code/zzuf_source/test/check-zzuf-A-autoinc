@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+#  check-zzuf-A-autoinc - test "zzuf -A" flag (auto-increment)
+#
+#  Copyright © 2002—2015 Sam Hocevar <sam@hocevar.net>
+#
+#  This program is free software. It comes without any warranty, to
+#  the extent permitted by applicable law. You can redistribute it
+#  and/or modify it under the terms of the Do What the Fuck You Want
+#  to Public License, Version 2, as published by the WTFPL Task Force.
+#  See http://www.wtfpl.net/ for more details.
+#
+
+. "$(dirname "$0")/functions.inc"
+
+start_test "zzuf -A test"
+
+# Check -A with no fuzzing: output must match
+new_test "zzuf -A -r0 zzat file-random file-random"
+m1=$($ZZUF -m -r0 $ZZAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -A -r0 $ZZAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
+if [ "$m1" = "$m2" ]; then
+    pass_test "ok"
+else
+    fail_test "$m1 != $m2"
+fi
+
+# Check -A with fuzzing: output must be different
+new_test "zzuf -A -r0.1 zzat file-random file-random"
+m1=$($ZZUF -m -r0.1 $ZZAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
+m2=$($ZZUF -m -A -r0.1 $ZZAT "$DIR/file-random" "$DIR/file-random" | cut -f2 -d' ')
+if [ "$m1" != "$m2" ]; then
+    pass_test "ok"
+else
+    fail_test "$m1 = $m2"
+fi
+
+stop_test
+

@@ -1,0 +1,31 @@
+#! /bin/sh
+
+##  Win32 cross-compilation for zzuf -- Sam Hocevar <sam@hocevar.net>
+
+set -x
+set -e
+
+# Clean up our working directory
+SRCDIR="`pwd`"
+DIRNAME="zzuf-win32-`sed -ne 's/^AC_INIT(.*, \(.*\)).*/\1/p' configure.ac`"
+INSTALLDIR="`pwd`/${DIRNAME}"
+BUILDDIR="${INSTALLDIR}/build"
+rm -Rf "${INSTALLDIR}"
+rm -f "${INSTALLDIR}.zip"
+mkdir "${INSTALLDIR}"
+mkdir "${BUILDDIR}"
+
+cd "${BUILDDIR}"
+# Build for win32
+"${SRCDIR}/configure" --host=i686-w64-mingw32 --prefix=/ --bindir=/ --libdir=/
+
+make pkglibdir=/ pkgdatadir=/data bindir=/
+
+make install DESTDIR="${INSTALLDIR}" pkglibdir=/ pkgdatadir=/ bindir=/
+rm -Rf "${BUILDDIR}"
+
+# Pack the directory
+cd "${SRCDIR}"
+zip "${DIRNAME}.zip" `find "${DIRNAME}"`
+rm -Rf "${INSTALLDIR}"
+
